@@ -1,11 +1,20 @@
 # Create your tests here.
+#### Testing User Registration ###
 POST http://127.0.0.1:8000/api/user/register/
 Content-Type: application/json
 
-{ "email": "prem@mail.com", "username": "prem", "password": "12345","password2": "12345", "userType": "employer"}
+{ "email": "prem@gmail.com", "username": "prem", "password": "12345","password2": "12345", "usertype": "employer"}
 
 ###
+#### Testing User Login ###
 POST http://127.0.0.1:8000/api/user/login/
 Content-Type: application/json
 
-{ "email": " raheem@example.com", "password": "12345"}
+{
+    "email": "prem@gmail.com",
+    "password": "12345"
+}
+###
+#### Testing User  ###
+GET http://127.0.0.1:8000/api/user/<int:pk>/
+

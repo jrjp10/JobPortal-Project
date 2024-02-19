@@ -1,12 +1,8 @@
 from django.contrib.auth.models import BaseUserManager
-from django.contrib.auth.hashers import make_password
 from django.db import models
 
-class UserType(models.TextChoices):
-    Jobseeker = 'JOBSEEKER', ('Jobseeker')
-    Employer = 'EMPLOYER', ('Employer')
 class UserManager(BaseUserManager):
-    def create_user(self, email, username, password=None, user_type=UserType.Jobseeker, **extra_fields):
+    def create_user(self, email, username, password=None,**extra_fields):
         """
         Create and save a user with the given email, username and password.
         """
@@ -16,7 +12,6 @@ class UserManager(BaseUserManager):
         user = self.model(
             email=self.normalize_email(email),  # Normalize the address
             username=username,
-            user_type=user_type,
             **extra_fields,
         )
         user.set_password(password)   # Hash the password before saving it in the database
@@ -36,6 +31,6 @@ class UserManager(BaseUserManager):
             raise ValueError(
                 'Superuser Must be assigned to is_superuser=True')
         
-        return self.create_user(email,username,password,**extra_field)
+        return self.create_user(email, username, password,**extra_field)
         
 

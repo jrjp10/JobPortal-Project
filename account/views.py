@@ -4,34 +4,12 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .renderers import UserRenderer
-from rest_framework.renderers import JSONRenderer
-from rest_framework.permissions import AllowAny
-from account.serializers import UserRegistrationSerializer
-from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
 
-# Create your views here.
-# class UserRegistrationView(APIView):
-#     renderer_classes = [UserRenderer]
+from account.serializers import UserRegistrationSerializer, UserLoginSerializer
 
-#     def post(self, request, format= None):
-#         serializer = UserRegistrationSerializer(data=request.data)
-#         if serializer.is_valid(raise_exception=True):
-#             user = serializer.save()
 
-#             # Use Validate data to set user types
-#             is_employer = serializer.validated_data.get('is_employer')
-#             is_jobseeker = serializer.validated_data.get('is_jobseeker')
-#             if is_employer:
-#                 user.is_employer = True
-#             elif is_jobseeker:
-#                 user.is_jobseeker = True
-#             user.save()
-            
-#             # Generate token
-#             token = get_token_for_users(user)
-#             return Response({'token':token, 'msg':'Registration Success'}, status=status.HTTP_201_CREATED )
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # Bad Request
-        
+
 # Generate Token Manually
 def get_token_for_users(user):
     try:
@@ -45,12 +23,11 @@ def get_token_for_users(user):
         print(f"Token generation failed for user {user.email}: {e}")
         # Return None or an empty dictionary indicating failure
         return None
-    
 
+
+# Create your views here.
 class UserRegistrationView(APIView):
-    renderer_classes = [JSONRenderer]
-    permission_classes = [AllowAny]
-
+    renderer_classes = [UserRenderer]
     """
         View to register a new user in the system.
         The view will receive two parameters (username and password).
@@ -60,25 +37,41 @@ class UserRegistrationView(APIView):
         then generate a JWT token for authentication.
         Otherwise, it returns errors about what went wrong.
     """
-    def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data)
+    def post(self, request, format=None):
+        serializer =  UserRegistrationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             user = serializer.save()
-            
-            # Use Validate data to set user types
-            is_employer = serializer.validated_data.get('is_employer')
-            is_jobseeker = serializer.validated_data.get('is_jobseeker')
-            if is_employer:
-                user.is_employer = True
-            elif is_jobseeker:
-                user.is_jobseeker = True
-            user.save()
-
-            # Generate tokens 
+            # Generate Token
             token = get_token_for_users(user)
             return Response({'token': token, 'msg': 'Registration Success'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        
+
+class UserLoginView(APIView):
+    renderer_classes = [UserRenderer]
+    def post(self, request, format=None):
+        serializer = UserLoginSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            email = serializer.validated_data['email']
+            password = serializer.validated_data['password']
+            # Get the user object based on the provided email and password
+            user = authenticate(email=email, password=password)
+            if user is not None:
+                # Generate a token for the authenticated user
+                token =  get_token_for_users(user)
+                # Return a success response with the token
+                return Response({
+                    'token':token,
+                    "msg":"Login Success",
+                    'usertype':serializer.validated_data['usertype']
+                    }, status=status.HTTP_200_OK)
+            else:
+                return Response({'errors':{'non_field_errors':['Email or Password is not Valid']}}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+              return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
     
 
         
